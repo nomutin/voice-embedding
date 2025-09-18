@@ -3,32 +3,23 @@ Transform: AWS::Serverless-2016-10-31
 Description: >
   voice-embedding
 
-  Powertools example
-
-Globals: # https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-specification-template-anatomy-globals.html
-  Function:
-    Timeout: 29
-    MemorySize: 1024
-    Runtime: python3.13
-
-    # You can add LoggingConfig parameters such as the Logformat, Log Group, and SystemLogLevel or ApplicationLogLevel. Learn more here https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html#sam-function-loggingconfig.
-    LoggingConfig:
-      LogFormat: JSON
 Resources:
-  VoiceEmbeddingFunction: # This is the logical ID of the function
-    Type: AWS::Serverless::Function     # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
+  VoiceEmbeddingFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      Handler: app.lambda_handler
+      Timeout: 30
+      MemorySize: 2048
+      Runtime: python3.13
+      Handler: voice_embedding.lambda_handler
       CodeUri: src/voice_embedding/
-      Description: Voice Embedding
       Architectures:
-      - x86_64
+        - x86_64
+      Policies:
+        - S3ReadPolicy
       Tracing: Active
-      # Powertools env vars: https://awslabs.github.io/aws-lambda-powertools-python/#environment-variables
+      LoggingConfig:
+        LogFormat: JSON
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: PowertoolsVoiceEmbedding
           POWERTOOLS_METRICS_NAMESPACE: Powertools
-          LOG_LEVEL: INFO
-      Tags:
-        LambdaPowertools: python
