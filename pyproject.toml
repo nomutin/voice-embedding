@@ -55,10 +55,7 @@ plugins = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = [
-    "S101",
-    "PLR2004",
-]
+"tests/*.py" = ["S101"]
 
 [tool.pytest.ini_options]
 addopts = [
@@ -70,8 +67,9 @@ markers = [
 
 [[tool.mypy.overrides]]
 module = [
+    "kaldi_native_fbank",
     "onnxruntime",
     "soundfile",
-    "kaldi_native_fbank",
+    "soxr",
 ]
 ignore_missing_imports = true

@@ -6,6 +6,7 @@ import boto3
 import numpy as np
 import onnxruntime
 import soundfile
+import soxr
 from aws_lambda_powertools import Logger
 from aws_lambda_powertools.utilities.parser import event_parser
 from aws_lambda_powertools.utilities.streaming.s3_object import S3Object
@@ -40,7 +41,7 @@ class OnnxFeatureEncoderProvider:
         self.session = onnxruntime.InferenceSession(model_path)
 
     def infer(self, voice_features: Feature) -> Embedding:
-        outputs = self.session.run(None, {"input": voice_features})
+        outputs = self.session.run(None, {"feats": voice_features})
         if not isinstance((output := outputs[0]), np.ndarray):
             logger.error("Type Error", outputs=outputs)
             raise TypeError
@@ -49,10 +50,11 @@ class OnnxFeatureEncoderProvider:
 
 def cast_bytes_to_numpy_features(data_bytes: bytes) -> Feature:
     with io.BytesIO(data_bytes) as f:
-        data_numpy, _fs = soundfile.read(f, dtype="float32", always_2d=True)
+        data_numpy, fs = soundfile.read(f, dtype="float32", always_2d=True)
     if not isinstance(data_numpy, np.ndarray):
         logger.error("Type Error", data=data_numpy)
         raise TypeError
+    data_numpy = soxr.resample(data_numpy, in_rate=fs, out_rate=16000)
     data_numpy = reduce(data_numpy, "length channels -> length", reduction="mean")
     data_numpy *= 1 << 15
 
@@ -94,7 +96,8 @@ def encode(
 @event_parser(model=RequestPayload)  # type: ignore[misc]
 def lambda_handler(event: RequestPayload, _context: LambdaContext) -> list[float]:
     s3_provider = S3Provider(session=boto3.Session())
-    onnx_provider = OnnxFeatureEncoderProvider(model_path=Path("/opt/ml/model/voice_feature_encoder.onnx"))
+    model_path = Path("voxceleb_resnet34_LM.onnx")
+    onnx_provider = OnnxFeatureEncoderProvider(model_path=model_path)
     return encode(
         s3_provider=s3_provider,
         encoder_provider=onnx_provider,
