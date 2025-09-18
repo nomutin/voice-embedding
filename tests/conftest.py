@@ -1,14 +1,13 @@
 from collections.abc import Generator
 from pathlib import Path
-from typing import Annotated, override
+from typing import override
 
 import boto3
 import numpy as np
 import pytest
 from moto import mock_aws
-from numpy import typing as npt
 
-from voice_embedding.app import OnnxVoiceFeatureEncoder, S3Provider
+from voice_embedding import Embedding, Feature, OnnxFeatureEncoderProvider, S3Provider
 
 
 @mock_aws
@@ -28,17 +27,14 @@ class MockS3Provider(S3Provider):
         )
 
 
-class MockOnnxVoiceFeatureProvider(OnnxVoiceFeatureEncoder):
+class MockOnnxVoiceFeatureProvider(OnnxFeatureEncoderProvider):
     @override
     def __init__(self, model_path: Path) -> None:
         pass
 
     @override
-    def infer(
-        self,
-        voice_features: Annotated[npt.NDArray[np.float32], "1 length 80"],
-    ) -> Annotated[npt.NDArray[np.float32], "1 1 192"]:
-        return np.ones((1, 1, 192), dtype=np.float32)
+    def infer(self, voice_features: Feature) -> Embedding:
+        return np.ones((1, 256), dtype=np.float32)
 
 
 @pytest.fixture
@@ -47,7 +43,7 @@ def mock_onnx_provider() -> MockOnnxVoiceFeatureProvider:
 
 
 @pytest.fixture
-def mock_s3_provider() -> Generator[MockS3Provider]:
+def mock_s3_provider() -> Generator[S3Provider]:
     with mock_aws():
         session = boto3.Session(region_name="ap-northeast-1")
         yield MockS3Provider(session=session)
