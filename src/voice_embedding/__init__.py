@@ -95,12 +95,16 @@ def encode(
 
 @event_parser(model=RequestPayload)  # type: ignore[misc]
 def lambda_handler(event: RequestPayload, _context: LambdaContext) -> list[float]:
-    s3_provider = S3Provider(session=boto3.Session())
-    model_path = Path("voxceleb_resnet34_LM.onnx")
-    onnx_provider = OnnxFeatureEncoderProvider(model_path=model_path)
-    return encode(
-        s3_provider=s3_provider,
-        encoder_provider=onnx_provider,
-        bucket=event.bucket,
-        key=event.key,
-    )
+    try:
+        s3_provider = S3Provider(session=boto3.Session())
+        model_path = Path("voxceleb_resnet34_LM.onnx")
+        onnx_provider = OnnxFeatureEncoderProvider(model_path=model_path)
+        return encode(
+            s3_provider=s3_provider,
+            encoder_provider=onnx_provider,
+            bucket=event.bucket,
+            key=event.key,
+        )
+    except Exception as exc:
+        logger.exception("Unhandled exception in lambda_handler", exc_info=exc)
+        raise
