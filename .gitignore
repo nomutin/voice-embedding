@@ -241,5 +241,9 @@ $RECYCLE.BIN/
 */build/*
 
 # End of https://www.gitignore.io/api/osx,linux,python,windows,pycharm,visualstudiocode
+
+# Custom
 *.onnx
 uv.lock
+requirements.txt
+.aws-sam
