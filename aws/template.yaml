@@ -5,21 +5,37 @@ Description: >
 
 Resources:
   VoiceEmbeddingFunction:
-    Type: AWS::Serverless::Function
+    Type: 'AWS::Serverless::Function'
     Properties:
       Timeout: 30
       MemorySize: 2048
       Runtime: python3.13
-      Handler: voice_embedding.lambda_handler
+      Handler: app.lambda_handler
       CodeUri: src/voice_embedding/
       Architectures:
         - x86_64
-      Policies:
-        - S3ReadPolicy
       Tracing: Active
+      FunctionUrlConfig:
+        AuthType: NONE
       LoggingConfig:
         LogFormat: JSON
       Environment:
         Variables:
           POWERTOOLS_SERVICE_NAME: PowertoolsVoiceEmbedding
           POWERTOOLS_METRICS_NAMESPACE: Powertools
+      Layers:
+        - !Ref ModelLayer
+  ModelLayer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      Content:
+        S3Bucket: voice-embedding
+        S3Key: model.zip
+      CompatibleRuntimes:
+        - python3.13
+
+
+Outputs:
+  VoiceEmbeddingFunctionUrl:
+    Description: "URL for function"
+    Value: !GetAtt VoiceEmbeddingFunctionUrl.FunctionUrl
